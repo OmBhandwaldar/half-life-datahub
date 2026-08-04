@@ -62,7 +62,7 @@ The memory that depended on the redefined term degraded. The one that didn't sta
 
 ## Quickstart
 
-Requires Docker (8 GB+ allocated), Python 3.10+.
+Requires Docker (8 GB+ allocated) and Python 3.10+.
 
 ```bash
 # 1. DataHub Core + sample data
@@ -71,16 +71,30 @@ datahub docker quickstart
 datahub datapack load showcase-ecommerce
 
 # 2. Half-Life
-pip install -e .
+uv sync                          # installs the exact locked dependency set
 export DATAHUB_GMS_URL=http://localhost:8080
-halflife init            # creates the structured properties
+uv run halflife init             # creates the structured properties
 
 # 3. Watch a memory die
-halflife demo seed       # five memories against real datapack entities
-halflife list            # all five VALID
-halflife demo drift      # breaking schema change + glossary redefinition + ownership handover
-halflife validate --apply
-halflife list            # expired, suspect, re-routed — and two still green
+uv run halflife demo seed        # five memories against real datapack entities
+uv run halflife list             # all five VALID
+uv run halflife demo drift       # breaking schema change + glossary redefinition + ownership handover
+uv run halflife validate --apply
+uv run halflife list             # expired, suspect, re-routed — and two still green
+```
+
+**Use `uv sync` rather than `pip install -e .`.** `uv.lock` is committed, and the
+lock matters here: `mcp` 2.0 removed `mcp.server.fastmcp`, so an unpinned
+resolution silently changes which MCP API the server gets. The code handles both,
+but the lock is what makes your run match the one in [`examples/`](examples/).
+
+If you would rather use pip, `pip install -e .` works and resolves the same
+`>=` constraints — just without the guarantee.
+
+To run the tests, install the dev extra as well — plain `uv sync` omits it:
+
+```bash
+uv sync --extra dev && uv run pytest      # 33 tests
 ```
 
 `halflife recall "how do I compute order totals"` returns only memories still worth trusting, and tells you what it withheld.
@@ -104,6 +118,8 @@ Half-Life ships an MCP server meant to run *alongside* DataHub's own. DataHub an
 | `memory_ledger` | Current status of every memory |
 
 `record_memory` rejects an empty dependency list. A memory with no recorded provenance can never be invalidated, which leaves it permanently authoritative — worse than not storing it at all.
+
+Two notes on the config. The Half-Life server is launched through `uv run` because its console script lives in the project venv and is not on `PATH`. And while Half-Life itself runs on Python 3.10+, DataHub's own MCP server requires **3.11+** — so the `datahub` entry needs a 3.11 interpreter available to `uvx`, even though Half-Life does not.
 
 ## Architecture
 
