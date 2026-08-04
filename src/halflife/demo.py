@@ -9,7 +9,9 @@ a tool that reddens everything is no more useful than one that reddens nothing.
 
 from __future__ import annotations
 
+import json
 import time
+from pathlib import Path
 
 from datahub.emitter.mcp import MetadataChangeProposalWrapper
 from datahub.metadata.schema_classes import (
@@ -122,6 +124,34 @@ def seed(client: HalfLifeClient, console) -> None:
     )
 
 
+#: Where the pre-drift state is stashed so the scenario can be replayed.
+#: `datapack load` will not restore a field that drift removed, so without this
+#: every run eats another column and the demo is not repeatable.
+BACKUP = Path.home() / ".halflife" / "demo-backup.json"
+
+
+def _backup(key: str, payload: dict) -> None:
+    BACKUP.parent.mkdir(parents=True, exist_ok=True)
+    existing = {}
+    if BACKUP.exists():
+        try:
+            existing = json.loads(BACKUP.read_text())
+        except ValueError:
+            existing = {}
+    # Never overwrite a pristine snapshot with an already-drifted one.
+    existing.setdefault(key, payload)
+    BACKUP.write_text(json.dumps(existing, indent=2))
+
+
+def _restore_payload(key: str) -> dict | None:
+    if not BACKUP.exists():
+        return None
+    try:
+        return json.loads(BACKUP.read_text()).get(key)
+    except ValueError:
+        return None
+
+
 def drift(client: HalfLifeClient, console) -> None:
     console.print("[bold]Applying three upstream changes[/]\n")
 
@@ -147,6 +177,8 @@ def _breaking_schema_change(client: HalfLifeClient, console) -> None:
         console.print("  [red]skip[/] inventories has no schema")
         return
 
+    _backup("inventories_schema", schema.to_obj())
+
     victim = _find_field(schema, "quantity_on_hand") or schema.fields[-1]
     schema.fields = [f for f in schema.fields if f.fieldPath != victim.fieldPath]
     client.graph.emit(MetadataChangeProposalWrapper(entityUrn=INVENTORIES, aspect=schema))
@@ -162,6 +194,8 @@ def _redefine_glossary_term(client: HalfLifeClient, console) -> None:
         console.print("  [red]skip[/] Order Total term not found")
         return
 
+    _backup("order_total_term", info.to_obj())
+
     info.definition = (
         "The total monetary value of an order EXCLUDING discounts, taxes and "
         "shipping. Redefined by the finance team to align with the general ledger."
@@ -173,6 +207,9 @@ def _redefine_glossary_term(client: HalfLifeClient, console) -> None:
 def _hand_over_ownership(client: HalfLifeClient, console) -> None:
     """Move the customers table to a new owner — escalation must follow."""
     ownership = client.graph.get_aspect(CUSTOMERS, aspect_type=OwnershipClass)
+    if ownership is not None:
+        _backup("customers_ownership", ownership.to_obj())
+
     owner = OwnerClass(owner=NEW_OWNER, type=OwnershipTypeClass.TECHNICAL_OWNER)
 
     if ownership is None:
@@ -190,23 +227,20 @@ def reset(client: HalfLifeClient, console) -> None:
     """Delete demo memories and their audit documents."""
     console.print("[bold]Removing demo memories[/]\n")
 
-    store = MemoryStore(client)
     removed = 0
-    for memory in store.list_memories():
-        if memory.id.startswith("hl-demo") or "-audit-" in memory.id:
-            try:
-                client.graph.delete_entity(urn=memory.urn, hard=True)
-                removed += 1
-                console.print(f"  [dim]deleted[/] {memory.title}")
-            except Exception as exc:
-                console.print(f"  [red]failed[/] {memory.urn}: {exc}")
+    # Enumerate documents directly rather than through MemoryStore: audit
+    # documents carry a different subtype, so listing memories alone would
+    # leave them behind to accumulate across runs.
+    for urn in _demo_document_urns(client):
+        try:
+            client.graph.delete_entity(urn=urn, hard=True)
+            removed += 1
+            console.print(f"  [dim]deleted[/] {urn.rsplit(':', 1)[-1]}")
+        except Exception as exc:
+            console.print(f"  [red]failed[/] {urn}: {exc}")
 
     console.print(f"\n[green]Removed {removed} document(s).[/]")
-    console.print(
-        "[dim]Restore the mutated entities with:  "
-        "datahub datapack unload showcase-ecommerce && "
-        "datahub datapack load showcase-ecommerce[/]"
-    )
+    _restore_entities(client, console)
 
 
 def _find_field(schema: SchemaMetadataClass, name: str):
@@ -222,3 +256,64 @@ def _short(urn: str) -> str:
         if len(parts) >= 2:
             return parts[-2]
     return urn.rsplit(":", 1)[-1]
+
+
+def _restore_entities(client: HalfLifeClient, console) -> None:
+    """Put back the schema, definition and ownership that drift changed.
+
+    `datapack load` upserts and will not restore a field that was removed, so
+    the scenario would otherwise degrade a little further on every run.
+    """
+    restores = (
+        ("inventories_schema", INVENTORIES, SchemaMetadataClass),
+        ("order_total_term", ORDER_TOTAL_TERM, GlossaryTermInfoClass),
+        ("customers_ownership", CUSTOMERS, OwnershipClass),
+    )
+
+    restored = 0
+    for key, urn, aspect_class in restores:
+        payload = _restore_payload(key)
+        if payload is None:
+            continue
+        try:
+            client.graph.emit(
+                MetadataChangeProposalWrapper(
+                    entityUrn=urn, aspect=aspect_class.from_obj(payload)
+                )
+            )
+            restored += 1
+        except Exception as exc:
+            console.print(f"  [red]restore failed[/] {key}: {exc}")
+
+    if restored:
+        console.print(f"[green]Restored {restored} mutated aspect(s).[/]")
+        BACKUP.unlink(missing_ok=True)
+    else:
+        console.print("[dim]Nothing to restore (drift has not run).[/]")
+
+
+def _demo_document_urns(client: HalfLifeClient) -> list[str]:
+    """Every document this demo created, memories and audits alike."""
+    urns: list[str] = []
+    scroll_id: str | None = None
+
+    while True:
+        params: dict = {"count": 200}
+        if scroll_id:
+            params["scrollId"] = scroll_id
+        try:
+            response = client.get_json("/openapi/v3/entity/document", params)
+        except Exception:
+            break
+
+        entities = response.get("entities") or []
+        for entity in entities:
+            urn = entity.get("urn") or ""
+            if urn.startswith("urn:li:document:hl-"):
+                urns.append(urn)
+
+        scroll_id = response.get("scrollId")
+        if not scroll_id or not entities:
+            break
+
+    return urns
