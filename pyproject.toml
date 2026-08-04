@@ -1,0 +1,38 @@
+[project]
+name = "halflife"
+version = "0.1.0"
+description = "Memory integrity for DataHub agents — agent memories that expire when the data beneath them changes."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Half-Life contributors" }]
+keywords = ["datahub", "ai-agents", "mcp", "metadata", "agent-memory"]
+
+dependencies = [
+    "acryl-datahub[datahub-rest]>=1.6.0",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "typer>=0.12",
+    "rich>=13.7",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "jinja2>=3.1",
+    "mcp>=1.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "respx>=0.21"]
+
+[project.scripts]
+halflife = "halflife.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/halflife"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
