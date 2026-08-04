@@ -98,36 +98,33 @@ class MemoryStore:
     def _memory_urns(self) -> list[str]:
         """Find memory documents by subtype.
 
-        Structured-property filters are avoided here because document indexing
-        lags writes by up to 15 minutes; subtype is populated on ingest.
-        """
-        query = """
-        query FindMemories($start: Int!, $count: Int!) {
-          searchAcrossEntities(input: {
-            types: [DOCUMENT], query: "*", start: $start, count: $count
-          }) {
-            total
-            searchResults { entity { urn ... on Document { subType { typeNames } } } }
-          }
-        }
+        This reads the entity store through the OpenAPI scroll endpoint rather
+        than the search index. Search lags writes by up to 15 minutes, which
+        would make a memory an agent just recorded invisible to the very next
+        validation or recall — the two operations most likely to follow it.
         """
         urns: list[str] = []
-        start, page = 0, 100
+        scroll_id: str | None = None
+
         while True:
+            params = {"count": 200}
+            if scroll_id:
+                params["scrollId"] = scroll_id
             try:
-                result = self._client.graphql(query, {"start": start, "count": page})
+                response = self._client.get_json("/openapi/v3/entity/document", params)
             except Exception:
                 break
-            search = (result or {}).get("searchAcrossEntities") or {}
-            results = search.get("searchResults") or []
-            for item in results:
-                entity = item.get("entity") or {}
-                subtypes = ((entity.get("subType") or {}).get("typeNames")) or []
+
+            entities = response.get("entities") or []
+            for entity in entities:
+                subtypes = _aspect(entity, "subTypes").get("typeNames") or []
                 if SUBTYPE_MEMORY in subtypes and entity.get("urn"):
                     urns.append(entity["urn"])
-            start += page
-            if start >= int(search.get("total") or 0) or not results:
+
+            scroll_id = response.get("scrollId")
+            if not scroll_id or not entities:
                 break
+
         return urns
 
     def _to_memory(self, document: Document) -> Memory:
@@ -179,3 +176,12 @@ def _int(value, default: int = 0) -> int:
         return int(float(value))
     except (TypeError, ValueError):
         return default
+
+
+def _aspect(entity: dict, name: str) -> dict:
+    """Unwrap the {aspectName: {"value": {...}}} envelope of the OpenAPI v3 API."""
+    wrapper = entity.get(name)
+    if not isinstance(wrapper, dict):
+        return {}
+    value = wrapper.get("value")
+    return value if isinstance(value, dict) else {}

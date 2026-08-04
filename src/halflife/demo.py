@@ -136,17 +136,22 @@ def drift(client: HalfLifeClient, console) -> None:
 
 
 def _breaking_schema_change(client: HalfLifeClient, console) -> None:
-    """Drop a column from order_details — a MAJOR, memory-killing change."""
-    schema = client.graph.get_aspect(ORDER_DETAILS, aspect_type=SchemaMetadataClass)
+    """Drop a column from inventories — a MAJOR, memory-killing change.
+
+    Deliberately aimed at a table only one memory depends on. Breaking
+    order_details instead would expire three memories at once and mask the
+    subtler glossary and ownership outcomes behind a wall of red.
+    """
+    schema = client.graph.get_aspect(INVENTORIES, aspect_type=SchemaMetadataClass)
     if schema is None:
-        console.print("  [red]skip[/] order_details has no schema")
+        console.print("  [red]skip[/] inventories has no schema")
         return
 
-    victim = _find_field(schema, "unit_price") or schema.fields[-1]
+    victim = _find_field(schema, "quantity_on_hand") or schema.fields[-1]
     schema.fields = [f for f in schema.fields if f.fieldPath != victim.fieldPath]
-    client.graph.emit(MetadataChangeProposalWrapper(entityUrn=ORDER_DETAILS, aspect=schema))
+    client.graph.emit(MetadataChangeProposalWrapper(entityUrn=INVENTORIES, aspect=schema))
     console.print(
-        f"  [red]breaking[/]  dropped column '{victim.fieldPath}' from analytics.order_details"
+        f"  [red]breaking[/]  dropped column '{victim.fieldPath}' from order_entry.inventories"
     )
 
 

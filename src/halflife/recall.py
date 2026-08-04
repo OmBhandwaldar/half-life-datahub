@@ -27,13 +27,19 @@ class Recalled:
 
     @property
     def warning(self) -> str | None:
-        if self.memory.status is MemoryStatus.SUSPECT:
-            return (
-                f"This memory is SUSPECT (integrity {self.memory.integrity_score}/100): "
-                f"{self.memory.invalidation_reason or 'a dependency changed'}. "
-                "Verify against the catalog before relying on it."
-            )
-        return None
+        if self.memory.status is not MemoryStatus.SUSPECT:
+            return None
+
+        # Reasons quote the before/after of a changed definition and can run to
+        # thousands of characters; a warning nobody reads protects nobody.
+        reason = self.memory.invalidation_reason or "a dependency changed"
+        if len(reason) > 220:
+            reason = reason[:217].rstrip() + "…"
+
+        return (
+            f"SUSPECT (integrity {self.memory.integrity_score}/100): {reason} "
+            "Verify against the catalog before relying on it."
+        )
 
 
 class Recall:

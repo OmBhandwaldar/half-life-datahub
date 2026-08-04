@@ -135,6 +135,19 @@ class HalfLifeClient:
             r["entity"]["urn"] for r in relationships if (r.get("entity") or {}).get("urn")
         )
 
+    def get_json(self, path: str, params: dict | None = None) -> dict:
+        """GET an OpenAPI endpoint that has no SDK equivalent."""
+        import httpx
+
+        response = httpx.get(
+            f"{self.config.gms_url}{path}",
+            params=params or {},
+            headers=self.config.auth_headers,
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        return response.json()
+
     def get_document(self, urn: str) -> Document | None:
         try:
             entity = self.sdk.entities.get(urn)
