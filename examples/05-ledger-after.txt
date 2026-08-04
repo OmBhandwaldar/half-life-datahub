@@ -1,0 +1,25 @@
+                                   5 memories                                   
+┏━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Status  ┃ Score ┃ Memory                   ┃ Deps ┃ Reason                   ┃
+┡━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ VALID   │   100 │ Join orders to           │    2 │ —                        │
+│         │       │ order_details on         │      │                          │
+│         │       │ order_id                 │      │                          │
+│ EXPIRED │     0 │ Inventory snapshots land │    1 │ Breaking change:         │
+│         │       │ nightly                  │      │ TECHNICAL_SCHEMA : A     │
+│         │       │                          │      │ backwards incompatible   │
+│         │       │                          │      │ change due to removal of │
+│         │       │                          │      │ field:                   │
+│         │       │                          │      │ 'quantity_on_hand'.      │
+│ VALID   │   100 │ order_details is one row │    1 │ —                        │
+│         │       │ per order line           │      │                          │
+│ VALID   │   100 │ Customer segmentation    │    1 │ Ownership changed;       │
+│         │       │ uses customer_class on   │      │ escalation re-routed.    │
+│         │       │ the customers table      │      │                          │
+│ SUSPECT │    70 │ Order Total is computed  │    2 │ DOCUMENTATION:           │
+│         │       │ before discounts         │      │ Documentation of         │
+│         │       │                          │      │ 'urn:li:glossaryTerm:b2… │
+│         │       │                          │      │ has been changed from    │
+│         │       │                          │      │ 'The total monetary      │
+│         │       │                          │      │ value of an order, i     │
+└─────────┴───────┴──────────────────────────┴──────┴──────────────────────────┘

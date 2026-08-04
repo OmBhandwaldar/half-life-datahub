@@ -1,0 +1,18 @@
+{
+  "urn": "urn:li:document:hl-demo-inventory-refresh",
+  "title": "Inventory snapshots land nightly",
+  "status": "EXPIRED",
+  "integrity_score": 0,
+  "recorded_at": 1785833807624,
+  "last_validated_at": 1785833834836,
+  "invalidation_reason": "Breaking change: TECHNICAL_SCHEMA [quantity_on_hand]: A backwards incompatible change due to removal of field: 'quantity_on_hand'.",
+  "dependencies": [
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:dbt,b2fd91.order_entry_db.order_entry.inventories,PROD)",
+      "fingerprint_at_record": "e37cf8adc02d"
+    }
+  ],
+  "changes_since_last_validation": [],
+  "silent_drift": [],
+  "would_become": "EXPIRED"
+}

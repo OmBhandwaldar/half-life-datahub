@@ -1,0 +1,50 @@
+{
+  "total": 5,
+  "by_status": {
+    "VALID": 3,
+    "SUSPECT": 1,
+    "EXPIRED": 1
+  },
+  "memories": [
+    {
+      "urn": "urn:li:document:hl-demo-revenue-join",
+      "title": "Join orders to order_details on order_id",
+      "status": "VALID",
+      "integrity_score": 100,
+      "dependencies": 2,
+      "reason": null
+    },
+    {
+      "urn": "urn:li:document:hl-demo-inventory-refresh",
+      "title": "Inventory snapshots land nightly",
+      "status": "EXPIRED",
+      "integrity_score": 0,
+      "dependencies": 1,
+      "reason": "Breaking change: TECHNICAL_SCHEMA [quantity_on_hand]: A backwards incompatible change due to removal of field: 'quantity_on_hand'."
+    },
+    {
+      "urn": "urn:li:document:hl-demo-order-grain",
+      "title": "order_details is one row per order line",
+      "status": "VALID",
+      "integrity_score": 100,
+      "dependencies": 1,
+      "reason": null
+    },
+    {
+      "urn": "urn:li:document:hl-demo-customer-segment",
+      "title": "Customer segmentation uses customer_class on the customers table",
+      "status": "VALID",
+      "integrity_score": 100,
+      "dependencies": 1,
+      "reason": "Ownership changed; escalation re-routed."
+    },
+    {
+      "urn": "urn:li:document:hl-demo-order-total",
+      "title": "Order Total is computed before discounts",
+      "status": "SUSPECT",
+      "integrity_score": 70,
+      "dependencies": 2,
+      "reason": "DOCUMENTATION: Documentation of 'urn:li:glossaryTerm:b2fd91.42266719-3cab-42b8-a8d2-49d782876dbc' has been changed from 'The\u00a0total monetary value of an order, including\u00a0all line items, discounts,\u00a0and applicable taxes. Calculated as\u00a0the sum of all\u00a0line item totals for a given order.\n\nSQL Calculation:\n\n\\- Single order: Use column 'order\\_total' directly\n\n\\- Aggregate total revenue: SUM(order\\_total)\n\n\\- Average order value: AVG(order\\_total)\n\n\\- Count orders: COUNT(DISTINCT order\\_id)\n\nExample queries:\n\n\\- Total revenue: SELECT SUM(order\\_total) FROM order\\_entry\\_db.analytics.order\\_details\n\n\\- Average order value: SELECT AVG(order\\_total) FROM order\\_entry\\_db.analytics.order\\_details\n\n\\- Revenue by date: SELECT order\\_date, SUM(order\\_total) FROM order\\_entry\\_db.analytics.order\\_details GROUP BY order\\_date' to 'The total monetary value of an order EXCLUDING discounts, taxes and shipping. Redefined by the finance team to align with the general ledger.'."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+Applying three upstream changes
+
+  breaking  dropped column 'quantity_on_hand' from order_entry.inventories
+  semantic  redefined glossary term 'Order Total'
+  ownership customers table handed to urn:li:corpuser:datahub
+
+Give DataHub a few seconds to compute the timeline, then run halflife validate 
+--apply.

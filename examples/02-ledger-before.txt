@@ -1,0 +1,11 @@
+                                   5 memories                                   
+┏━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━┓
+┃ Status ┃ Score ┃ Memory                                      ┃ Deps ┃ Reason ┃
+┡━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━┩
+│ VALID  │   100 │ Join orders to order_details on order_id    │    2 │ —      │
+│ VALID  │   100 │ Inventory snapshots land nightly            │    1 │ —      │
+│ VALID  │   100 │ order_details is one row per order line     │    1 │ —      │
+│ VALID  │   100 │ Customer segmentation uses customer_class   │    1 │ —      │
+│        │       │ on the customers table                      │      │        │
+│ VALID  │   100 │ Order Total is computed before discounts    │    2 │ —      │
+└────────┴───────┴─────────────────────────────────────────────┴──────┴────────┘

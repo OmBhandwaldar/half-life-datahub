@@ -1,0 +1,17 @@
+Recording demo memories
+
+  recorded Order Total is computed before discounts
+      22bc5cde0a0c  b2fd91.order_entry_db.analytics.order_details
+      8c5bc388ffef  b2fd91.42266719-3cab-42b8-a8d2-49d782876dbc
+  recorded Customer segmentation uses customer_class on the customers table
+      78ef795ae073  b2fd91.order_entry_db.order_entry.customers
+  recorded order_details is one row per order line
+      22bc5cde0a0c  b2fd91.order_entry_db.analytics.order_details
+  recorded Inventory snapshots land nightly
+      e37cf8adc02d  b2fd91.order_entry_db.order_entry.inventories
+  recorded Join orders to order_details on order_id
+      50626488ef02  b2fd91.order_entry_db.order_entry.orders
+      22bc5cde0a0c  b2fd91.order_entry_db.analytics.order_details
+
+All five start VALID. Run halflife demo drift to change the world underneath 
+them.

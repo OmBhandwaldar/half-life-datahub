@@ -1,0 +1,18 @@
+{
+  "urn": "urn:li:document:hl-demo-order-total",
+  "title": "Order Total is computed before discounts",
+  "text": "When reporting order value from analytics.order_details, use the Order Total definition: the monetary value of an order including all line items, discounts and shipping. Do not recompute it from unit_price * quantity, which ignores order-level adjustments.",
+  "status": "SUSPECT",
+  "integrity_score": 70,
+  "dependencies": [
+    "urn:li:dataset:(urn:li:dataPlatform:snowflake,b2fd91.order_entry_db.analytics.order_details,PROD)",
+    "urn:li:glossaryTerm:b2fd91.42266719-3cab-42b8-a8d2-49d782876dbc"
+  ],
+  "fingerprints": {
+    "urn:li:dataset:(urn:li:dataPlatform:snowflake,b2fd91.order_entry_db.analytics.order_details,PROD)": "22bc5cde0a0c",
+    "urn:li:glossaryTerm:b2fd91.42266719-3cab-42b8-a8d2-49d782876dbc": "8c5bc388ffef"
+  },
+  "recorded_at": 1785833807463,
+  "last_validated_at": 1785833835061,
+  "invalidation_reason": "DOCUMENTATION: Documentation of 'urn:li:glossaryTerm:b2fd91.42266719-3cab-42b8-a8d2-49d782876dbc' has been changed from 'The\u00a0total monetary value of an order, including\u00a0all line items, discounts,\u00a0and applicable taxes. Calculated as\u00a0the sum of all\u00a0line item totals for a given order.\n\nSQL Calculation:\n\n\\- Single order: Use column 'order\\_total' directly\n\n\\- Aggregate total revenue: SUM(order\\_total)\n\n\\- Average order value: AVG(order\\_total)\n\n\\- Count orders: COUNT(DISTINCT order\\_id)\n\nExample queries:\n\n\\- Total revenue: SELECT SUM(order\\_total) FROM order\\_entry\\_db.analytics.order\\_details\n\n\\- Average order value: SELECT AVG(order\\_total) FROM order\\_entry\\_db.analytics.order\\_details\n\n\\- Revenue by date: SELECT order\\_date, SUM(order\\_total) FROM order\\_entry\\_db.analytics.order\\_details GROUP BY order\\_date' to 'The total monetary value of an order EXCLUDING discounts, taxes and shipping. Redefined by the finance team to align with the general ledger.'."
+}

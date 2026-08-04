@@ -1,0 +1,27 @@
+                              Validated 5 memories                              
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Memory                   ┃ Status          ┃ Score ┃ Why                     ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ Join orders to           │ VALID           │   100 │ No relevant changes.    │
+│ order_details on         │                 │       │                         │
+│ order_id                 │                 │       │                         │
+│ Inventory snapshots land │ VALID → EXPIRED │     0 │ Breaking change:        │
+│ nightly                  │                 │       │ TECHNICAL_SCHEMA : A    │
+│                          │                 │       │ backwards incompatible  │
+│                          │                 │       │ change due to removal   │
+│                          │                 │       │ of field:               │
+│                          │                 │       │ 'quantity_on_hand'.     │
+│ order_details is one row │ VALID           │   100 │ No relevant changes.    │
+│ per order line           │                 │       │                         │
+│ Customer segmentation    │ VALID           │   100 │ Ownership changed;      │
+│ uses customer_class on   │                 │       │ escalation re-routed.   │
+│ the customers table      │                 │       │                         │
+│ Order Total is computed  │ VALID → SUSPECT │    70 │ DOCUMENTATION:          │
+│ before discounts         │                 │       │ Documentation of        │
+│                          │                 │       │ 'urn:li:glossaryTerm:b… │
+│                          │                 │       │ has been changed from   │
+│                          │                 │       │ 'The total monetary     │
+│                          │                 │       │ value of an order,      │
+│                          │                 │       │ including all line      │
+│                          │                 │       │ items, discounts, and   │
+└──────────────────────────┴─────────────────┴───────┴─────────────────────────┘

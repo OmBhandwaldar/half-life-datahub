@@ -1,0 +1,4 @@
+No trustworthy memories matched.
+
+1 expired memory/memories withheld: Inventory snapshots land nightly
+Re-derive these from the catalog rather than trusting them.
