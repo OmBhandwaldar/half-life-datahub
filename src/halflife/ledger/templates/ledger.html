@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Half-Life — memory ledger</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #21262d;
+    --text: #e6edf3; --dim: #7d8590;
+    --valid: #3fb950; --suspect: #d29922; --expired: #f85149;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ffffff; --panel: #f6f8fa; --line: #d1d9e0;
+      --text: #1f2328; --dim: #59636e;
+      --valid: #1a7f37; --suspect: #9a6700; --expired: #cf222e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.5rem; background: var(--bg); color: var(--text);
+    font: 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.02em; }
+  .tagline { color: var(--dim); font-size: 0.9rem; }
+  .counts { display: flex; gap: 0.5rem; margin: 1.25rem 0 1.75rem; flex-wrap: wrap; }
+  .pill {
+    padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.8rem;
+    font-weight: 600; border: 1px solid var(--line); background: var(--panel);
+  }
+  .pill b { font-variant-numeric: tabular-nums; }
+  .VALID   { color: var(--valid); }
+  .SUSPECT { color: var(--suspect); }
+  .EXPIRED { color: var(--expired); }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    border-radius: 8px; padding: 1rem 1.15rem; margin-bottom: 0.85rem;
+  }
+  .card.s-VALID   { border-left-color: var(--valid); }
+  .card.s-SUSPECT { border-left-color: var(--suspect); }
+  .card.s-EXPIRED { border-left-color: var(--expired); opacity: 0.82; }
+
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .title { font-weight: 600; }
+  .card.s-EXPIRED .title { text-decoration: line-through; text-decoration-thickness: 1px; }
+  .status { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; white-space: nowrap; }
+  .body { color: var(--dim); font-size: 0.9rem; margin: 0.4rem 0 0.75rem; }
+
+  .meter { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 0.75rem; }
+  .meter span { display: block; height: 100%; }
+
+  .deps { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .dep {
+    font-size: 0.73rem; padding: 0.2rem 0.5rem; border-radius: 4px;
+    border: 1px solid var(--line); color: var(--dim);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .dep b { color: var(--text); font-weight: 500; }
+
+  .reason {
+    font-size: 0.82rem; padding: 0.55rem 0.7rem; border-radius: 6px;
+    background: var(--bg); border: 1px solid var(--line);
+    overflow-wrap: anywhere;
+  }
+  .reason.s-SUSPECT { color: var(--suspect); }
+  .reason.s-EXPIRED { color: var(--expired); }
+  .empty { color: var(--dim); padding: 2rem 0; }
+  footer { margin-top: 2rem; color: var(--dim); font-size: 0.8rem; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Half-Life</h1>
+    <span class="tagline">memory integrity for DataHub agents</span>
+  </header>
+
+  <div class="counts">
+    <span class="pill">{{ total }} memories</span>
+    <span class="pill VALID"><b>{{ counts.VALID }}</b> valid</span>
+    <span class="pill SUSPECT"><b>{{ counts.SUSPECT }}</b> suspect</span>
+    <span class="pill EXPIRED"><b>{{ counts.EXPIRED }}</b> expired</span>
+  </div>
+
+  {% if not memories %}
+    <p class="empty">No memories recorded yet. Run <code>halflife demo seed</code>.</p>
+  {% endif %}
+
+  {% for m in memories %}
+  <div class="card s-{{ m.status }}">
+    <div class="row">
+      <span class="title">{{ m.title }}</span>
+      <span class="status {{ m.status }}">{{ m.status }} · {{ m.score }}/100</span>
+    </div>
+    <div class="body">{{ m.text }}</div>
+
+    <div class="meter">
+      <span style="width: {{ m.score }}%; background: var(--{{ m.status|lower }});"></span>
+    </div>
+
+    <div class="deps">
+      {% for d in m.dependencies %}
+        <span class="dep"><b>{{ d.label }}</b> · {{ d.fingerprint }}</span>
+      {% endfor %}
+    </div>
+
+    {% if m.reason and m.status != 'VALID' %}
+      <div class="reason s-{{ m.status }}">{{ m.reason }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <footer>
+    Backed by <a href="{{ gms_url }}">DataHub</a>. Expired memories are unpublished
+    and can no longer be recalled. Refreshes every 4s.
+  </footer>
+</div>
+<script>setTimeout(() => location.reload(), 4000);</script>
+</body>
+</html>
