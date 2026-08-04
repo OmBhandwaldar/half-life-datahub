@@ -9,3 +9,6 @@ build/
 .DS_Store
 *.log
 scratch/
+
+# Internal working plan, not part of the deliverable
+PLAN.md
