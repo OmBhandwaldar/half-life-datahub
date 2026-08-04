@@ -9,7 +9,11 @@ still true". The second question is the one nothing else answers.
 
 from __future__ import annotations
 
-from mcp.server.fastmcp import FastMCP
+try:
+    # mcp >= 2.0 renamed FastMCP to MCPServer and moved it.
+    from mcp.server import MCPServer as _Server
+except ImportError:  # pragma: no cover - depends on the installed mcp
+    from mcp.server.fastmcp import FastMCP as _Server
 
 from .actions import Actuator
 from .client import HalfLifeClient
@@ -18,7 +22,7 @@ from .recall import Recall
 from .store import MemoryStore, now_ms, slugify
 from .validator import Validator
 
-mcp = FastMCP(
+mcp = _Server(
     "half-life",
     instructions=(
         "Durable memory for data agents, stored in DataHub and automatically "
