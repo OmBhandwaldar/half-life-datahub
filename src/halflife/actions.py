@@ -73,30 +73,78 @@ class Actuator:
         self._client.upsert(document)
 
         if write_audit and verdict.changed:
-            audit_urn = self.write_audit(verdict, timestamp)
-            if audit_urn:
+            try:
+                self.write_audit(verdict, timestamp)
                 actions.append("audit document written")
+            except Exception as exc:
+                # The status change already landed and matters more than the
+                # audit trail, so this is reported rather than raised — but it
+                # is never silently dropped.
+                actions.append(f"audit document FAILED: {exc}")
 
         return actions
 
-    def write_audit(self, verdict: Verdict, timestamp: int) -> str | None:
+    def write_audit(self, verdict: Verdict, timestamp: int) -> str:
         """Record why a memory changed state, linked to both sides of the story."""
         memory = verdict.memory
-        related = [memory.urn] + [e.target_urn for e in verdict.events]
+
+        # relatedAssets accepts only data entities. Documents link through
+        # relatedDocuments, and schema fields have to be folded up to the
+        # dataset that owns them.
+        assets = [
+            linkable
+            for urn in list(memory.dependencies) + [e.target_urn for e in verdict.events]
+            if (linkable := _linkable_asset(urn)) is not None
+        ]
 
         audit = Document.create_document(
             id=f"{memory.id}-audit-{timestamp}",
             title=f"Memory {verdict.new_status.value}: {memory.title}",
             text=_audit_body(verdict, timestamp),
             subtype=SUBTYPE_AUDIT,
-            related_assets=list(dict.fromkeys(related)) or None,
+            related_assets=list(dict.fromkeys(assets)) or None,
+            related_documents=[memory.urn],
             show_in_global_context=False,
         )
-        try:
-            self._client.upsert(audit)
-        except Exception:
-            return None
+        self._client.upsert(audit)
         return str(audit.urn)
+
+
+#: Entity types DataHub accepts in a document's relatedAssets.
+_LINKABLE_PREFIXES = (
+    "urn:li:dataset:",
+    "urn:li:glossaryTerm:",
+    "urn:li:dashboard:",
+    "urn:li:chart:",
+    "urn:li:dataJob:",
+    "urn:li:dataFlow:",
+    "urn:li:container:",
+    "urn:li:mlModel:",
+)
+
+
+def _linkable_asset(urn: str) -> str | None:
+    """Coerce a URN into something relatedAssets will accept, or drop it.
+
+    Schema-change events target the schemaField rather than its dataset, and
+    a schemaField cannot be a related asset - so it is folded up to the parent
+    dataset, which is the thing a reader actually wants to open.
+    """
+    if urn.startswith("urn:li:schemaField:("):
+        inner = urn[len("urn:li:schemaField:(") :]
+        depth = 0
+        for index, char in enumerate(inner):
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                if depth == 0:
+                    break
+                depth -= 1
+            elif char == "," and depth == 0:
+                return inner[:index]
+        return None
+
+    return urn if urn.startswith(_LINKABLE_PREFIXES) else None
 
 
 def _audit_body(verdict: Verdict, timestamp: int) -> str:

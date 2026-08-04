@@ -96,12 +96,15 @@ def validate(
     table.add_column("Why", max_width=60)
 
     changed = 0
+    failures: list[str] = []
     for memory in memories:
         verdict = validator.validate(memory, now=now)
         if verdict.changed:
             changed += 1
         if apply:
-            actuator.apply(verdict)
+            for action in actuator.apply(verdict):
+                if "FAILED" in action:
+                    failures.append(f"{memory.title}: {action}")
 
         style = _STATUS_STYLE[verdict.new_status]
         transition = (
@@ -117,6 +120,8 @@ def validate(
         )
 
     console.print(table)
+    for failure in failures:
+        console.print(f"[red]![/] {failure}")
     if changed and not apply:
         console.print(
             f"\n[yellow]{changed} memory/memories changed state.[/] "
