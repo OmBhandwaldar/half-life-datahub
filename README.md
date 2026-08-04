@@ -85,6 +85,26 @@ halflife list            # expired, suspect, re-routed — and two still green
 
 `halflife recall "how do I compute order totals"` returns only memories still worth trusting, and tells you what it withheld.
 
+`halflife serve` opens the ledger at <http://127.0.0.1:8420>.
+
+Sample outputs from a real run are in **[`examples/`](examples/)** — no setup needed to see what it produces.
+
+## Using it from an agent
+
+Half-Life ships an MCP server meant to run *alongside* DataHub's own. DataHub answers "what is true about the catalog right now"; Half-Life answers "what have we learned before, and does it still hold".
+
+[`.mcp.json`](.mcp.json) wires both for Claude Code:
+
+| Tool | Purpose |
+|---|---|
+| `recall` | Prior conclusions, expired ones withheld |
+| `record_memory` | Store a conclusion with its provenance |
+| `validate_memories` | Re-check everything, write verdicts back |
+| `explain_memory` | Provenance and causal chain for one memory |
+| `memory_ledger` | Current status of every memory |
+
+`record_memory` rejects an empty dependency list. A memory with no recorded provenance can never be invalidated, which leaves it permanently authoritative — worse than not storing it at all.
+
 ## Architecture
 
 ```
@@ -112,6 +132,11 @@ Behaviours found by running against a live instance rather than reading document
 - Timeline responses are a **bare transaction array**, not the documented `{"changeTransactions": [...]}` wrapper, and events use `entityUrn` / `operation` / `modifier` rather than `target` / `changeType` / `elementId`.
 - The **`OWNERSHIP` category returns HTTP 500** on every URN, including ones that do not exist. The "legacy" `OWNER` alias is the one that works — the reverse of what the docs say. *(Reported upstream; see [docs/upstream.md](docs/upstream.md).)*
 - Editing a glossary term's **definition** is reported as `DOCUMENTATION`, not `GLOSSARY_TERM` — that category is reserved for terms being attached to entities. Redefining a term changes what every memory built on it means, so Half-Life treats documentation changes on glossary terms as semantic while the same edit on a dataset is not.
+
+## Contributing back
+
+- **[`skill/datahub-memory-integrity/`](skill/datahub-memory-integrity/)** — a skill written to the [datahub-skills](https://github.com/datahub-project/datahub-skills) format, to be proposed upstream. The existing skills cover searching, enriching and quality-checking the catalog; none cover the durability of what an agent concludes from it.
+- **[`docs/upstream.md`](docs/upstream.md)** — five reproducible findings against v1.5.0.6, written up as bug reports with reproduction steps, expected behaviour, and the workaround used here. Each is pinned by a regression test so the workaround can be removed once fixed.
 
 ## Attribution
 
