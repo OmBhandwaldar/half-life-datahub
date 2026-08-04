@@ -25,6 +25,7 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "respx>=0.21"]
 
 [project.scripts]
 halflife = "halflife.cli:app"
+halflife-mcp = "halflife.mcp_server:main"
 
 [build-system]
 requires = ["hatchling"]

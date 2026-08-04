@@ -11,7 +11,7 @@ from .client import HalfLifeClient
 from .models import MemoryStatus
 from .properties import bootstrap
 from .recall import Recall
-from .store import MemoryStore, now_ms
+from .store import MemoryStore, now_ms, slugify
 from .validator import Validator
 
 app = typer.Typer(
@@ -60,7 +60,7 @@ def record(
     """Record a memory together with the state of everything it relies on."""
     store = MemoryStore(_client())
     memory = store.record(
-        memory_id=memory_id or _slug(title),
+        memory_id=memory_id or slugify(title),
         title=title,
         text=text,
         dependencies=list(depends_on),
@@ -219,13 +219,6 @@ def demo_reset() -> None:
     from .demo import reset
 
     reset(_client(), console)
-
-
-def _slug(text: str) -> str:
-    import re
-
-    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-    return slug[:60] or "memory"
 
 
 if __name__ == "__main__":

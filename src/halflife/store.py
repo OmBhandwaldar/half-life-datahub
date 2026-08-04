@@ -7,6 +7,7 @@ tools they use anyway, and the integrity verdict travels with it.
 
 from __future__ import annotations
 
+import re
 import time
 
 from datahub.sdk.document import Document
@@ -19,6 +20,12 @@ from .models import Memory, MemoryStatus
 
 def now_ms() -> int:
     return int(time.time() * 1000)
+
+
+def slugify(text: str) -> str:
+    """Derive a stable document id from a memory title."""
+    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return slug[:60] or "memory"
 
 
 def truncate(text: str, limit: int = MAX_PROPERTY_BYTES) -> str:
