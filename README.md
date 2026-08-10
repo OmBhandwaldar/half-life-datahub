@@ -47,18 +47,25 @@ Ownership changes never invalidate a memory — the facts are unaffected — but
 
 A tool that reddens everything is no more useful than one that reddens nothing. Verified against a live instance with the `showcase-ecommerce` datapack:
 
-```
-=== validate immediately after recording ===
-  order-total-memory      VALID    score=100  events=0
-  control-memory          VALID    score=100  events=0
+Three upstream changes land — a dropped column, a redefined glossary term, an ownership handover. This is `halflife validate --apply` immediately afterwards:
 
-=== after redefining the 'Order Total' glossary term ===
-  order-total-memory      SUSPECT  score= 70  events=1
-       - DOCUMENTATION MINOR :: Documentation of 'urn:li:glossaryTerm:...42266719...'
-  control-memory          VALID    score=100  events=0
+```
+│ Memory                   │ Status          │ Score │ Why                     │
+│ Join orders to           │ VALID           │   100 │ No relevant changes.    │
+│ order_details on order_id│                 │       │                         │
+│ Inventory snapshots land │ VALID → EXPIRED │     0 │ Breaking change:        │
+│ nightly                  │                 │       │ removal of field        │
+│                          │                 │       │ 'quantity_on_hand'.     │
+│ order_details is one row │ VALID           │   100 │ No relevant changes.    │
+│ per order line           │                 │       │                         │
+│ Customer segmentation    │ VALID           │   100 │ Ownership changed;      │
+│ uses customer_class      │                 │       │ escalation re-routed.   │
+│ Order Total is computed  │ VALID → SUSPECT │    70 │ DOCUMENTATION: the      │
+│ before discounts         │                 │       │ term's definition       │
+│                          │                 │       │ changed from '…'        │
 ```
 
-The memory that depended on the redefined term degraded. The one that didn't stayed green.
+One expires, one becomes suspect, one has its escalation re-routed, and **two are left alone**. The green rows are the claim — full output in [`examples/04-validate.txt`](examples/04-validate.txt).
 
 ## Quickstart
 
