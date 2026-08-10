@@ -59,9 +59,11 @@ class MemoryStore:
             text=text,
             subtype=SUBTYPE_MEMORY,
             related_assets=dependencies or None,
-            # Memories are agent context, not human documentation, so they stay
-            # out of global search until someone asks for them by relationship.
-            show_in_global_context=False,
+            # Visible in global search on purpose. What an agent worked out is
+            # institutional knowledge, and a data engineer opening the table it
+            # concerns should see it - including that it has expired. Quarantine
+            # is handled by unpublishing, not by hiding.
+            show_in_global_context=True,
             structured_properties={
                 property_urn("status"): [MemoryStatus.VALID.value],
                 property_urn("dependencies"): list(dependencies),
