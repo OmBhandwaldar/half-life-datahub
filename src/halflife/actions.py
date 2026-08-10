@@ -104,7 +104,10 @@ class Actuator:
             subtype=SUBTYPE_AUDIT,
             related_assets=list(dict.fromkeys(assets)) or None,
             related_documents=[memory.urn],
-            show_in_global_context=False,
+            # Discoverable for the same reason as the memory itself: whoever
+            # finds an expired memory needs the record of what killed it, and
+            # whoever changed the asset should be able to see what it cost.
+            show_in_global_context=True,
         )
         self._client.upsert(audit)
         return str(audit.urn)
