@@ -118,6 +118,8 @@ def seed(client: HalfLifeClient, console) -> None:
         for urn, fingerprint in memory.fingerprints.items():
             console.print(f"      [dim]{fingerprint}  {_short(urn)}[/]")
 
+    _await_readable(store, len(_MEMORIES), console)
+
     console.print(
         "\n[dim]All five start VALID. Run [bold]halflife demo drift[/dim][dim] "
         "to change the world underneath them.[/]"
@@ -159,9 +161,71 @@ def drift(client: HalfLifeClient, console) -> None:
     _redefine_glossary_term(client, console)
     _hand_over_ownership(client, console)
 
+    _await_visible(client, console)
+
+
+#: How long to wait for GMS to make an emitted change queryable.
+_PROPAGATION_TIMEOUT_S = 90
+_POLL_INTERVAL_S = 3
+
+
+def _await_readable(store: MemoryStore, expected: int, console) -> None:
+    """Block until every seeded memory can be read back.
+
+    Writes are ingested asynchronously, so `seed` can return before its own
+    documents are retrievable. A `validate` run immediately afterwards would
+    then silently operate on a partial set and skip memories entirely - which
+    looks like a logic bug but is really a race.
+    """
+    deadline = time.monotonic() + _PROPAGATION_TIMEOUT_S
+
+    console.print("\n[dim]waiting for DataHub to index the memories…[/]", end="")
+    while time.monotonic() < deadline:
+        if len(store.list_memories()) >= expected:
+            console.print(" [green]ready[/]")
+            return
+        console.print(".", end="")
+        time.sleep(_POLL_INTERVAL_S)
+
+    console.print(f" [yellow]only some are readable after {_PROPAGATION_TIMEOUT_S}s[/]")
+
+
+def _await_visible(client: HalfLifeClient, console) -> None:
+    """Block until the breaking change is actually observable.
+
+    GMS ingests aspects asynchronously, so emitting a change and immediately
+    validating reports the *old* state and the demo silently produces the wrong
+    answer. Waiting here rather than printing "give it a few seconds" means the
+    documented command sequence works when run back to back.
+    """
+    from .models import ChangeCategory
+    from .timeline import TimelineClient
+
+    timeline = TimelineClient(client.config)
+    deadline = time.monotonic() + _PROPAGATION_TIMEOUT_S
+
+    console.print("\n[dim]waiting for DataHub to process the changes…[/]", end="")
+    while time.monotonic() < deadline:
+        events = timeline.changes(
+            INVENTORIES,
+            start=0,
+            end=int(time.time() * 1000),
+            categories=(ChangeCategory.TECHNICAL_SCHEMA,),
+        )
+        if any(e.is_breaking for e in events):
+            console.print(" [green]ready[/]")
+            console.print(
+                "\n[dim]Now run [bold]halflife validate --apply[/dim][dim].[/]"
+            )
+            return
+        console.print(".", end="")
+        time.sleep(_POLL_INTERVAL_S)
+
+    # Not fatal: validation still works, it just may need a second run.
     console.print(
-        "\n[dim]Give DataHub a few seconds to compute the timeline, then run "
-        "[bold]halflife validate --apply[/dim][dim].[/]"
+        f" [yellow]still pending after {_PROPAGATION_TIMEOUT_S}s[/]\n"
+        "[dim]Run [bold]halflife validate --apply[/dim][dim] anyway; if the "
+        "inventory memory has not expired, run it once more.[/]"
     )
 
 
