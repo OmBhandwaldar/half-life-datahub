@@ -146,7 +146,7 @@ Behaviours found by running against a live instance rather than reading document
 
 - The Timeline API **ignores the `start` parameter** and replays an entity's entire computed history. Without client-side filtering, every freshly recorded memory is judged against the ingestion that created its own dependencies, and is immediately marked suspect. This one silently destroys precision.
 - Timeline responses are a **bare transaction array**, not the documented `{"changeTransactions": [...]}` wrapper, and events use `entityUrn` / `operation` / `modifier` rather than `target` / `changeType` / `elementId`.
-- The **`OWNERSHIP` category returns HTTP 500** on every URN, including ones that do not exist. The "legacy" `OWNER` alias is the one that works — the reverse of what the docs say. *(Reported upstream; see [docs/upstream.md](docs/upstream.md).)*
+- The **`OWNERSHIP` category returns HTTP 500** on every URN, including ones that do not exist. The "legacy" `OWNER` alias is the one that works — the reverse of what the docs say. *(Reported upstream as [datahub-project/datahub#19053](https://github.com/datahub-project/datahub/issues/19053); see [docs/upstream.md](docs/upstream.md).)*
 - Editing a glossary term's **definition** is reported as `DOCUMENTATION`, not `GLOSSARY_TERM` — that category is reserved for terms being attached to entities. Redefining a term changes what every memory built on it means, so Half-Life treats documentation changes on glossary terms as semantic while the same edit on a dataset is not.
 
 ## Why this, and not something else

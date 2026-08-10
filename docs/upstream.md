@@ -5,7 +5,8 @@ Behaviours found while building Half-Life against **DataHub Core v1.5.0.6** (GMS
 documentation, each is reproducible from a clean quickstart, and each is worked
 around in this repository with a test pinning the real behaviour.
 
-They are written up here in the form a maintainer would want them.
+They are written up here in the form a maintainer would want them, and reported
+upstream as **[datahub-project/datahub#19053](https://github.com/datahub-project/datahub/issues/19053)**.
 
 ---
 
