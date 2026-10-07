@@ -23,8 +23,7 @@ It is already built, by DataHub, several times over:
 | Contract enforcement | Data Contracts — "prevents breaking changes" |
 
 Whatever was left would have been a marginal improvement on a shipped DataHub
-feature. That is the one thing the hackathon's originality criterion explicitly
-rules out.
+feature.
 
 ## Everything else that was checked and ruled out
 

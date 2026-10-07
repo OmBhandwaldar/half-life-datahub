@@ -2,7 +2,6 @@
 
 **Memory integrity for DataHub agents.** Agent memories decay when the data beneath them changes. Half-Life computes how much is left.
 
-Built for [Build with DataHub: The Agent Hackathon](https://datahub.devpost.com/).
 
 ---
 
@@ -170,13 +169,12 @@ Writing memories in is solved. **Taking them away is not.** [`docs/research.md`]
 
 ## Attribution
 
-Third-party components used, per the hackathon's disclosure requirement:
+Third-party components used:
 
 - [DataHub](https://github.com/datahub-project/datahub) (Apache 2.0) — metadata platform, Python SDK, Timeline API
 - `showcase-ecommerce` datapack from [datahub-project/static-assets](https://github.com/datahub-project/static-assets) — demo data
 - Typer, Rich, FastAPI, httpx, Pydantic, MCP SDK
 
-All Half-Life source in this repository was written during the hackathon submission period.
 
 ## License
 
